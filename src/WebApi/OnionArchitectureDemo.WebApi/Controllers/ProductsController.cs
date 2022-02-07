@@ -1,6 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using OnionArchitectureDemo.Application.Dto;
+using OnionArchitectureDemo.Application.Features.Commands.CreateProduct;
+using OnionArchitectureDemo.Application.Features.Queries.GetAllProducts;
+using OnionArchitectureDemo.Application.Features.Queries.GetProductById;
 using OnionArchitectureDemo.Application.Interfaces.Repository;
 using System;
 using System.Collections.Generic;
@@ -13,23 +17,31 @@ namespace OnionArchitectureDemo.WebApi.Controllers
     [ApiController]
     public class ProductsController : ControllerBase
     {
-        private readonly IProductRepository productRepository;
+        private readonly IMediator _mediator;
 
-        public ProductsController(IProductRepository productRepository)
+        public ProductsController(IMediator mediator)
         {
-            this.productRepository = productRepository;
+            _mediator = mediator;
         }
 
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            var allList = await productRepository.GetAllAsync();
-            var result = allList.Select(i => new ProductViewDto()
-            {
-                Id = i.Id,
-                Name = i.Name
-            });
-            return Ok(result);
+            var query = new GetAllProductsQuery();
+            return Ok(await _mediator.Send(query));
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(Guid id)
+        {
+            var query = new GetProductByIdQuery() { Id = id };
+            return Ok(await _mediator.Send(query));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Post(CreateProductCommand command)
+        {
+            return Ok(await _mediator.Send(command));
         }
     }
 }
